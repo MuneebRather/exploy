@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Exploy — Sign in</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:         #0a0b10;
+    --surface:    #15171f;
+    --surface-2:  #1b1e28;
+    --border:     #262a37;
+    --border-hi:  #383e52;
+    --accent:     #6685ff;
+    --accent-hi:  #86a0ff;
+    --accent-dp:  #4f6ef7;
+    --accent-dim: rgba(102,133,255,.16);
+    --success:    #3ddc97;
+    --amber:      #f7b955;
+    --error:      #f2596b;
+    --text-1:     #f5f6fa;
+    --text-2:     #8d92ac;
+    --text-3:     #4f5471;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+    --sans: 'Inter', sans-serif;
+    --display: 'Sora', 'Inter', sans-serif;
+  }
+
+  html, body {
+    min-height: 100vh;
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text-1);
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+  }
+
+  a { color: inherit; }
+
+  /* ============ unified background ============ */
+  .canvas {
+    position: relative;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+
+  .canvas::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(900px 560px at 12% -6%, rgba(102,133,255,.16), transparent 58%),
+      radial-gradient(700px 620px at 88% 108%, rgba(102,133,255,.10), transparent 55%),
+      radial-gradient(520px 420px at 78% 6%, rgba(140,100,255,.07), transparent 60%);
+    pointer-events: none;
+  }
+
+  .canvas::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,.022) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.022) 1px, transparent 1px);
+    background-size: 36px 36px;
+    mask-image: radial-gradient(ellipse 75% 65% at 24% 30%, black, transparent 78%);
+    pointer-events: none;
+  }
+
+  .shell {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  }
+
+  .divider {
+    position: absolute;
+    top: 8%; bottom: 8%;
+    left: calc(1.05fr / (1.05fr + 1fr) * 100%);
+    width: 1px;
+    background: linear-gradient(to bottom, transparent, rgba(255,255,255,.07) 20%, rgba(255,255,255,.07) 80%, transparent);
+  }
+
+  /* ============ LEFT — deploy terminal signature ============ */
+  .left {
+    position: relative;
+    padding: 56px 64px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+
+  .brand-mark {
+    width: 46px; height: 46px;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    filter: drop-shadow(0 4px 18px rgba(102,133,255,.45));
+  }
+
+  .brand-name {
+    font-family: var(--display);
+    font-size: 1.65rem;
+    font-weight: 700;
+    letter-spacing: -.4px;
+  }
+  .brand-name b { color: var(--accent-hi); font-weight: 800; }
+
+  .left-copy {
+    max-width: 400px;
+    margin-top: 40px;
+  }
+
+  .left-copy h1 {
+    font-family: var(--display);
+    font-size: 1.9rem;
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: -.4px;
+    margin-bottom: 12px;
+  }
+
+  .left-copy p {
+    color: var(--text-2);
+    font-size: .93rem;
+    line-height: 1.6;
+  }
+
+  /* terminal — fixed height, no layout shift */
+  .term {
+    margin-top: 34px;
+    background: rgba(13,15,21,.72);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid var(--border-hi);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 34px 80px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.02) inset;
+    height: 260px;
+    flex-shrink: 0;
+  }
+
+  .term-bar {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 11px 14px;
+    background: rgba(255,255,255,.02);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .dot { width: 9px; height: 9px; border-radius: 50%; opacity: .55; }
+  .dot.r { background: #f2596b; }
+  .dot.y { background: #f7b955; }
+  .dot.g { background: #3ddc97; }
+
+  .term-title {
+    margin-left: 6px;
+    font-family: var(--mono);
+    font-size: .72rem;
+    color: var(--text-3);
+  }
+
+  .term-body {
+    padding: 18px 20px 22px;
+    font-family: var(--mono);
+    font-size: .81rem;
+    line-height: 1.9;
+    height: calc(100% - 38px);
+  }
+
+  .term-line {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    opacity: 0;
+    white-space: pre;
+  }
+
+  .term-line.show { animation: lineIn .35s ease forwards; }
+
+  @keyframes lineIn {
+    from { opacity: 0; transform: translateY(3px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .term-line .glyph { flex-shrink: 0; }
+  .term-line.ok .glyph { color: var(--success); }
+  .term-line.run .glyph { color: var(--amber); }
+  .term-line.cmd .glyph { color: var(--accent-hi); }
+  .term-line .dim { color: var(--text-3); }
+  .term-line .path { color: var(--text-1); }
+  .term-line .url { color: var(--accent-hi); }
+
+  .cursor {
+    display: inline-block;
+    width: 6px; height: 13px;
+    background: var(--accent-hi);
+    margin-left: 2px;
+    animation: blink 1s step-end infinite;
+    vertical-align: -2px;
+  }
+
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .left-foot {
+    display: flex;
+    gap: 22px;
+    font-size: .78rem;
+    color: var(--text-3);
+  }
+  .left-foot span { display: flex; align-items: center; gap: 7px; }
+  .status-pip {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--success);
+    box-shadow: 0 0 0 3px rgba(61,220,151,.15);
+  }
+
+  /* ============ RIGHT — form ============ */
+  .right {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+  }
+
+  .form-wrap {
+    width: 100%;
+    max-width: 372px;
+    opacity: 0;
+    animation: riseIn .6s cubic-bezier(.22,.68,0,1.05) .12s forwards;
+  }
+
+  @keyframes riseIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .form-head { margin-bottom: 32px; }
+
+  .form-head h2 {
+    font-family: var(--display);
+    font-size: 1.55rem;
+    font-weight: 700;
+    letter-spacing: -.3px;
+    margin-bottom: 7px;
+  }
+
+  .form-head p {
+    color: var(--text-2);
+    font-size: .89rem;
+  }
+
+  /* Mobile-only logo inside form head */
+  .mobile-logo {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .mobile-logo .brand-mark {
+    width: 42px;
+    height: 42px;
+    filter: drop-shadow(0 3px 14px rgba(102,133,255,.45));
+  }
+
+  .mobile-logo .brand-name {
+    font-family: var(--display);
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -.3px;
+  }
+  .mobile-logo .brand-name b { color: var(--accent-hi); font-weight: 800; }
+
+  .mobile-tagline {
+    display: none;
+    color: var(--text-2);
+    font-size: .82rem;
+    font-weight: 400;
+    letter-spacing: .2px;
+    margin-bottom: 28px;
+    line-height: 1.5;
+  }
+
+  .error-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    background: rgba(242,89,107,.08);
+    border: 1px solid rgba(242,89,107,.25);
+    color: #fb92a0;
+    padding: 11px 13px;
+    border-radius: 10px;
+    font-size: .82rem;
+    line-height: 1.45;
+    margin-bottom: 20px;
+    animation: shake .4s ease;
+  }
+  .error-banner svg { flex-shrink: 0; margin-top: 1px; color: var(--error); }
+
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    20% { transform: translateX(-5px); }
+    40% { transform: translateX(5px); }
+    60% { transform: translateX(-3px); }
+    80% { transform: translateX(3px); }
+  }
+
+  .field { margin-bottom: 17px; }
+
+  .field label {
+    display: block;
+    font-size: .74rem;
+    font-weight: 600;
+    color: var(--text-2);
+    margin-bottom: 7px;
+  }
+
+  .input-wrap { position: relative; }
+
+  .input-wrap svg {
+    position: absolute;
+    left: 13px; top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-3);
+    pointer-events: none;
+    transition: color .15s;
+  }
+
+  input[type=text], input[type=password] {
+    width: 100%;
+    padding: 12px 13px 12px 40px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text-1);
+    font-family: var(--sans);
+    font-size: .91rem;
+    outline: none;
+    transition: border-color .15s, box-shadow .15s, background .15s;
+  }
+
+  input::placeholder { color: var(--text-3); }
+
+  input:hover { border-color: var(--border-hi); }
+
+  input:focus {
+    border-color: var(--accent);
+    background: var(--surface-2);
+    box-shadow: 0 0 0 4px var(--accent-dim);
+  }
+
+  .input-wrap:focus-within svg { color: var(--accent-hi); }
+
+  .row-between {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 5px 0 24px;
+  }
+
+  .check {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: .8rem;
+    color: var(--text-2);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .check input {
+    width: 15px; height: 15px;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+
+  .forgot {
+    font-size: .8rem;
+    color: var(--text-2);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: color .15s, border-color .15s;
+  }
+  .forgot:hover { color: var(--accent-hi); border-color: var(--accent-hi); }
+
+  button[type=submit] {
+    width: 100%;
+    padding: 12px;
+    background: #435fe0;
+    color: #fff;
+    border: 1px solid rgba(255,255,255,.06);
+    border-radius: 9px;
+    font-family: var(--sans);
+    font-size: .91rem;
+    font-weight: 600;
+    letter-spacing: -.1px;
+    cursor: pointer;
+    position: relative;
+    transition: background .15s, transform .1s;
+    box-shadow: 0 1px 2px rgba(0,0,0,.35);
+  }
+
+  button[type=submit]:hover { background: #3a52c9; }
+  button[type=submit]:active { background: #3248b0; transform: scale(.99); }
+
+  button[type=submit]:focus-visible {
+    outline: 2px solid var(--accent-hi);
+    outline-offset: 2px;
+  }
+
+  button.loading { pointer-events: none; color: transparent; }
+  button.loading .spinner { display: block; }
+
+  .spinner {
+    display: none;
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%,-50%);
+    width: 17px; height: 17px;
+    border: 2.5px solid rgba(255,255,255,.35);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+  }
+  @keyframes spin { to { transform: translate(-50%,-50%) rotate(360deg); } }
+
+  .helper {
+    margin-top: 22px;
+    text-align: center;
+    font-size: .78rem;
+    color: var(--text-3);
+  }
+  .helper code {
+    font-family: var(--mono);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 1px 6px;
+    border-radius: 5px;
+    color: var(--text-2);
+    font-size: .74rem;
+  }
+
+  /* ============ responsive ============ */
+  @media (max-width: 900px) {
+    .shell { grid-template-columns: 1fr; }
+    .left { display: none; }
+    .divider { display: none; }
+    .right { min-height: 100vh; }
+    .mobile-logo { display: flex; }
+    .mobile-tagline { display: block; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .form-wrap { animation: none; opacity: 1; }
+    .term-line { animation: none; opacity: 1; }
+    .cursor { animation: none; }
+    .error-banner { animation: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="canvas">
+<div class="shell">
+  <div class="divider"></div>
+
+  <!-- ============ LEFT ============ -->
+  <div class="left">
+    <div class="brand">
+      <svg class="brand-mark" width="46" height="46" viewBox="0 0 24 24">
+        <defs>
+          <linearGradient id="bolt" x1="3" y1="2" x2="21" y2="22" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#ffffff"/>
+            <stop offset="55%" stop-color="#c3cfff"/>
+            <stop offset="100%" stop-color="#6685ff"/>
+          </linearGradient>
+        </defs>
+        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" fill="url(#bolt)"/>
+      </svg>
+      <span class="brand-name">Ex<b>ploy</b></span>
+    </div>
+
+    <div class="left-copy">
+      <h1>Ship it, then forget the infrastructure.</h1>
+      <p>Push to your branch. Exploy builds, tests, and puts it live on the edge — no servers to babysit.</p>
+
+      <div class="term">
+        <div class="term-bar">
+          <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+          <span class="term-title">Exploy — deploy</span>
+        </div>
+        <div class="term-body" id="termBody"></div>
+      </div>
+    </div>
+
+    <div class="left-foot">
+      <span><span class="status-pip"></span> All systems operational</span>
+      <span>v1.0.0</span>
+    </div>
+  </div>
+
+  <!-- ============ RIGHT ============ -->
+  <div class="right">
+    <div class="form-wrap">
+
+      <div class="form-head">
+        <!-- Mobile-only logo -->
+        <div class="mobile-logo">
+          <svg class="brand-mark" width="42" height="42" viewBox="0 0 24 24">
+            <defs>
+              <linearGradient id="bolt-mobile" x1="3" y1="2" x2="21" y2="22" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#ffffff"/>
+                <stop offset="55%" stop-color="#c3cfff"/>
+                <stop offset="100%" stop-color="#6685ff"/>
+              </linearGradient>
+            </defs>
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" fill="url(#bolt-mobile)"/>
+          </svg>
+          <span class="brand-name">Ex<b>ploy</b></span>
+        </div>
+
+        <!-- Mobile-only tagline -->
+        <p class="mobile-tagline">Deploy to the edge in seconds.</p>
+
+        <h2>Sign in</h2>
+        <p>Welcome back to your deployment dashboard.</p>
+      </div>
+
+      {% if error %}
+      <div class="error-banner">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <span>{{ error }}</span>
+      </div>
+      {% endif %}
+
+      <form method="POST" id="loginForm">
+
+        <div class="field">
+          <label for="username">Username</label>
+          <div class="input-wrap">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+            </svg>
+            <input type="text" id="username" name="username" placeholder="admin" autocomplete="username" autofocus/>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="password">Password</label>
+          <div class="input-wrap">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            <input type="password" id="password" name="password" placeholder="••••••••" autocomplete="current-password"/>
+          </div>
+        </div>
+
+        <div class="row-between">
+          <label class="check">
+            <input type="checkbox" name="remember"/> Remember me
+          </label>
+          <a href="#" class="forgot">Forgot password?</a>
+        </div>
+
+        <button type="submit" id="signInBtn">
+          <span>Sign in</span>
+          <span class="spinner"></span>
+        </button>
+      </form>
+
+      <p class="helper">Default credentials <code>admin</code> / <code>admin123</code></p>
+
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script>
+  // form submit loading state
+  document.getElementById('loginForm').addEventListener('submit', function() {
+    document.getElementById('signInBtn').classList.add('loading');
+  });
+
+  // animated deploy terminal
+  const lines = [
+    { html: '<span class="glyph dim">$</span> <span class="path">exploy deploy</span> <span class="dim">--prod</span>', cls: 'cmd' },
+    { html: '<span class="glyph">✓</span> Installing dependencies <span class="dim">(1.2s)</span>', cls: 'ok' },
+    { html: '<span class="glyph">✓</span> Running build script <span class="dim">(3.4s)</span>', cls: 'ok' },
+    { html: '<span class="glyph">◐</span> Optimizing assets…', cls: 'run', id: 'optLine' },
+    { html: '<span class="glyph">✓</span> Optimizing assets <span class="dim">(0.9s)</span>', cls: 'ok', replaces: 'optLine' },
+    { html: '<span class="glyph">✓</span> Uploading to edge network', cls: 'ok' },
+    { html: '<span class="glyph">✓</span> Deployment live', cls: 'ok' },
+    { html: '', cls: '' },
+    { html: '<span class="glyph dim">→</span> <span class="url">http://localhost:80</span><span class="cursor"></span>', cls: '' },
+  ];
+
+  const body = document.getElementById('termBody');
+  let timers = [];
+
+  function clearTimers() { timers.forEach(t => clearTimeout(t)); timers = []; }
+
+  function typeSequence() {
+    body.innerHTML = '';
+    let delay = 250;
+    lines.forEach((line) => {
+      const t = setTimeout(() => {
+        if (line.replaces) {
+          const old = document.getElementById(line.replaces);
+          if (old) { old.outerHTML = `<div class="term-line show ${line.cls}">${line.html}</div>`; return; }
+        }
+        const div = document.createElement('div');
+        div.className = 'term-line ' + line.cls;
+        div.innerHTML = line.html;
+        body.appendChild(div);
+        requestAnimationFrame(() => div.classList.add('show'));
+      }, delay);
+      timers.push(t);
+      delay += line.cls === 'run' ? 900 : 420;
+    });
+    const restart = setTimeout(() => { clearTimers(); typeSequence(); }, delay + 3200);
+    timers.push(restart);
+  }
+
+  typeSequence();
+</script>
+
+</body>
+</html>
