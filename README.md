@@ -60,7 +60,7 @@ Updated application is live
 - View, stop and restart containers
 - Basic deployment logs
 
-### Level 2 — CI Integration (In Progress)
+### Level 2 — CI Integration (Completed)✅
 - GitHub repository integration
 - Detect code pushes automatically
 - Trigger Docker image builds via GitHub Actions
@@ -96,11 +96,14 @@ Updated application is live
 
 Level 1 establishes a functional container management dashboard built with Flask and the Docker SDK. Containers are displayed in a card-based interface with real-time status indicators and support full lifecycle operations, including deploy, start, stop, restart, and remove. A dedicated logs viewer enables inspection of container output. The application verifies Docker daemon connectivity during startup and handles daemon unavailability gracefully. All management routes are protected using a login_required decorator, and a settings page provides platform information along with Docker Engine status.
 
-### Level 2 — CI Integration (In Progress)
+### Level 2 — CI Integration ✅
 
 - [x] GitHub repository integration
 - [x] Detect code pushes automatically
-- [ ] Trigger Docker image builds via GitHub Actions
+- [x] Trigger Docker image builds via GitHub Actions
+
+Linked containers to their corresponding GitHub repositories
+using Docker labels and implemented a webhook endpoint to receive GitHub push events. Added an Activity page to display deployment history, including repository, branch, commit hash, author, and event status. Configured a GitHub Actions workflow to automatically build and push Docker images to Docker Hub whenever code is pushed to the main branch. Images are tagged with the Git commit SHA to ensure version traceability and reproducible deployments.
 
 ## Design Approach
 
