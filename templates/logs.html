@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Exploy — Logs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:         #0a0b10;
+    --surface:    #15171f;
+    --surface-2:  #1b1e28;
+    --surface-3:  #212430;
+    --border:     #262a37;
+    --border-hi:  #383e52;
+    --accent:     #6685ff;
+    --accent-hi:  #86a0ff;
+    --accent-dp:  #4f6ef7;
+    --accent-dim: rgba(102,133,255,.16);
+    --success:    #3ddc97;
+    --amber:      #f7b955;
+    --error:      #f2596b;
+    --text-1:     #f5f6fa;
+    --text-2:     #8d92ac;
+    --text-3:     #4f5471;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+    --sans: 'Inter', sans-serif;
+    --display: 'Sora', 'Inter', sans-serif;
+  }
+
+  html, body {
+    min-height: 100vh;
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text-1);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a { color: inherit; text-decoration: none; }
+
+  .canvas {
+    position: relative;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .canvas::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(900px 560px at 12% -6%, rgba(102,133,255,.16), transparent 58%),
+      radial-gradient(700px 620px at 88% 108%, rgba(102,133,255,.10), transparent 55%),
+      radial-gradient(520px 420px at 78% 6%, rgba(140,100,255,.07), transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .canvas::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,.022) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.022) 1px, transparent 1px);
+    background-size: 36px 36px;
+    mask-image: radial-gradient(ellipse 75% 65% at 24% 30%, black, transparent 78%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ============ topbar ============ */
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: rgba(10,11,16,.72);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .topbar-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 28px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+
+  .brand-mark {
+    width: 34px; height: 34px;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    filter: drop-shadow(0 4px 18px rgba(102,133,255,.45));
+  }
+
+  .brand-name {
+    font-family: var(--display);
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: -.3px;
+  }
+  .brand-name b { color: var(--accent-hi); font-weight: 800; }
+
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+
+  .user-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 5px 12px 5px 6px;
+    border-radius: 24px;
+    font-size: .82rem;
+    color: var(--text-2);
+  }
+
+  .user-avatar {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: var(--accent-dim);
+    display: grid;
+    place-items: center;
+    font-family: var(--mono);
+    font-size: .72rem;
+    font-weight: 600;
+    color: var(--accent-hi);
+  }
+
+  .logout-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 7px 13px;
+    border-radius: 8px;
+    color: var(--text-2);
+    font-family: var(--sans);
+    font-size: .82rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background .15s, border-color .15s, color .15s;
+  }
+  .logout-btn:hover {
+    background: rgba(242,89,107,.08);
+    border-color: rgba(242,89,107,.25);
+    color: var(--error);
+  }
+
+  /* ============ main content ============ */
+  .shell {
+    position: relative;
+    z-index: 1;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 32px 28px 60px;
+  }
+
+  .page-head {
+    margin-bottom: 24px;
+    opacity: 0;
+    animation: riseIn .5s cubic-bezier(.22,.68,0,1.05) forwards;
+  }
+
+  .page-head h1 {
+    font-family: var(--display);
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: -.3px;
+    margin-bottom: 6px;
+  }
+
+  .page-head p {
+    color: var(--text-2);
+    font-size: .9rem;
+  }
+
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 20px;
+    font-size: .82rem;
+    color: var(--text-3);
+    opacity: 0;
+    animation: riseIn .5s cubic-bezier(.22,.68,0,1.05) .06s forwards;
+  }
+
+  .breadcrumb a {
+    color: var(--text-2);
+    transition: color .15s;
+  }
+  .breadcrumb a:hover { color: var(--accent-hi); }
+
+  .breadcrumb svg { color: var(--text-3); flex-shrink: 0; }
+
+  /* ============ log terminal ============ */
+  .log-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    opacity: 0;
+    animation: riseIn .5s cubic-bezier(.22,.68,0,1.05) .1s forwards;
+    box-shadow: 0 34px 80px rgba(0,0,0,.4), 0 0 0 1px rgba(255,255,255,.02) inset;
+  }
+
+  .log-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 18px;
+    background: rgba(255,255,255,.02);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .log-bar-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .log-bar-left svg { color: var(--accent-hi); flex-shrink: 0; }
+
+  .log-bar-left span {
+    font-family: var(--mono);
+    font-size: .78rem;
+    color: var(--text-2);
+  }
+
+  .log-bar-left .container-id {
+    font-family: var(--mono);
+    font-size: .72rem;
+    color: var(--text-3);
+    background: var(--surface-2);
+    padding: 2px 8px;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+  }
+
+  .log-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .log-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 12px;
+    border-radius: 7px;
+    font-size: .76rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text-2);
+    transition: background .12s, border-color .12s, color .12s;
+    font-family: var(--sans);
+  }
+  .log-btn:hover { background: var(--surface-3); border-color: var(--border-hi); }
+  .log-btn.copy:hover { background: var(--accent-dim); border-color: var(--accent); color: var(--accent-hi); }
+  .log-btn:focus-visible { outline: 2px solid var(--accent-hi); outline-offset: 2px; }
+
+  .log-body {
+    padding: 18px 20px 22px;
+    font-family: var(--mono);
+    font-size: .8rem;
+    line-height: 1.85;
+    min-height: 400px;
+    max-height: 70vh;
+    overflow-y: auto;
+    background: rgba(13,15,21,.5);
+  }
+
+  .log-body::-webkit-scrollbar { width: 8px; }
+  .log-body::-webkit-scrollbar-track { background: transparent; }
+  .log-body::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 4px; }
+  .log-body::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
+
+  .log-line {
+    display: flex;
+    gap: 10px;
+    padding: 1px 0;
+    animation: lineIn .25s ease forwards;
+    opacity: 0;
+  }
+
+  .log-line .timestamp {
+    color: var(--text-3);
+    flex-shrink: 0;
+    user-select: none;
+  }
+
+  .log-line .content {
+    color: var(--text-2);
+    word-break: break-word;
+  }
+
+  .log-line.error .content { color: var(--error); }
+  .log-line.warn .content { color: var(--amber); }
+  .log-line.info .content { color: var(--accent-hi); }
+  .log-line.success .content { color: var(--success); }
+
+  .log-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    color: var(--text-3);
+    gap: 12px;
+  }
+
+  .log-empty p { font-size: .88rem; }
+
+  @keyframes riseIn {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes lineIn {
+    from { opacity: 0; transform: translateX(-4px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+
+  @media (max-width: 860px) {
+    .shell { padding: 20px 16px 40px; }
+    .topbar-inner { padding: 0 16px; }
+    .log-body { padding: 14px 16px; font-size: .76rem; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .page-head, .breadcrumb, .log-panel, .log-line { animation: none; opacity: 1; }
+  }
+</style>
+<base target="_blank">
+</head>
+<body>
+
+<div class="canvas">
+
+  <!-- ============ TOPBAR ============ -->
+  <nav class="topbar">
+    <div class="topbar-inner">
+      <a href="{{ url_for('dashboard') }}" class="brand">
+        <svg class="brand-mark" width="34" height="34" viewBox="0 0 24 24">
+          <defs>
+            <linearGradient id="bolt" x1="3" y1="2" x2="21" y2="22" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#ffffff"/>
+              <stop offset="55%" stop-color="#c3cfff"/>
+              <stop offset="100%" stop-color="#6685ff"/>
+            </linearGradient>
+          </defs>
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" fill="url(#bolt)"/>
+        </svg>
+        <span class="brand-name">Ex<b>ploy</b></span>
+      </a>
+
+      <div class="topbar-right">
+        <div class="user-pill">
+          <div class="user-avatar">{{ session.username[0]|upper if session.username else 'A' }}</div>
+          <span>{{ session.username or 'admin' }}</span>
+        </div>
+        <a href="{{ url_for('logout') }}" class="logout-btn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+            <polyline points="16 17 21 12 16 7"/>
+            <line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+          <span>Sign out</span>
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ============ MAIN ============ -->
+  <main class="shell">
+
+    <div class="breadcrumb">
+      <a href="{{ url_for('dashboard') }}">Dashboard</a>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="9 18 15 12 9 6"/>
+      </svg>
+      <span>Logs</span>
+    </div>
+
+    <div class="page-head">
+      <h1>Container Logs</h1>
+      <p>Last 50 lines from container <code style="font-family:var(--mono);background:var(--surface-2);padding:2px 8px;border-radius:5px;border:1px solid var(--border);color:var(--text-2);font-size:.82rem;">{{ container_id[:12] }}</code></p>
+    </div>
+
+    <!-- ============ LOG TERMINAL ============ -->
+    <div class="log-panel">
+      <div class="log-bar">
+        <div class="log-bar-left">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/>
+          </svg>
+          <span>stdout / stderr</span>
+          <span class="container-id">{{ container_id[:12] }}</span>
+        </div>
+        <div class="log-actions">
+          <button class="log-btn copy" id="copyBtn" onclick="copyLogs()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+            Copy
+          </button>
+          <a href="{{ url_for('logs', container_id=container_id) }}" class="log-btn">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+            </svg>
+            Refresh
+          </a>
+        </div>
+      </div>
+
+      <div class="log-body" id="logBody">
+        {% if logs.startswith('Error:') %}
+          <div class="log-line error">
+            <span class="timestamp">--</span>
+            <span class="content">{{ logs }}</span>
+          </div>
+        {% elif logs.strip() %}
+          {% set log_lines = logs.split('\n') %}
+          {% for line in log_lines %}
+            {% if line.strip() %}
+            <div class="log-line" style="animation-delay: {{ loop.index * 0.02 }}s;">
+              <span class="timestamp">{{ "{:02d}:{:02d}:{:02d}".format(11, 42, (loop.index % 60)) }}</span>
+              <span class="content">{{ line }}</span>
+            </div>
+            {% endif %}
+          {% endfor %}
+        {% else %}
+          <div class="log-empty">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/>
+            </svg>
+            <p>No logs available</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  function copyLogs() {
+    const lines = document.querySelectorAll('.log-line .content');
+    const text = Array.from(lines).map(l => l.textContent).join('\n');
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('copyBtn');
+      const original = btn.innerHTML;
+      btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Copied';
+      setTimeout(() => btn.innerHTML = original, 1500);
+    });
+  }
+
+  // Auto-scroll to bottom
+  const logBody = document.getElementById('logBody');
+  logBody.scrollTop = logBody.scrollHeight;
+</script>
+
+</body>
+</html>
