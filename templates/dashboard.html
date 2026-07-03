@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Exploy — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:         #0a0b10;
+    --surface:    #15171f;
+    --surface-2:  #1b1e28;
+    --surface-3:  #212430;
+    --border:     #262a37;
+    --border-hi:  #383e52;
+    --accent:     #6685ff;
+    --accent-hi:  #86a0ff;
+    --accent-dp:  #4f6ef7;
+    --accent-dim: rgba(102,133,255,.16);
+    --success:    #3ddc97;
+    --success-dim: rgba(61,220,151,.14);
+    --amber:      #f7b955;
+    --amber-dim:  rgba(247,185,85,.14);
+    --error:      #f2596b;
+    --error-dim:  rgba(242,89,107,.14);
+    --text-1:     #f5f6fa;
+    --text-2:     #8d92ac;
+    --text-3:     #4f5471;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+    --sans: 'Inter', sans-serif;
+    --display: 'Sora', 'Inter', sans-serif;
+  }
+
+  html, body {
+    min-height: 100vh;
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text-1);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a { color: inherit; text-decoration: none; }
+  button { font-family: inherit; cursor: pointer; }
+
+  /* ============ background ============ */
+  .canvas {
+    position: relative;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .canvas::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(900px 560px at 12% -6%, rgba(102,133,255,.16), transparent 58%),
+      radial-gradient(700px 620px at 88% 108%, rgba(102,133,255,.10), transparent 55%),
+      radial-gradient(520px 420px at 78% 6%, rgba(140,100,255,.07), transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .canvas::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,.022) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.022) 1px, transparent 1px);
+    background-size: 36px 36px;
+    mask-image: radial-gradient(ellipse 75% 65% at 24% 30%, black, transparent 78%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ============ topbar ============ */
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: rgba(10,11,16,.72);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .topbar-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 28px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+
+  .brand-mark {
+    width: 34px; height: 34px;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    filter: drop-shadow(0 4px 18px rgba(102,133,255,.45));
+  }
+
+  .brand-name {
+    font-family: var(--display);
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: -.3px;
+  }
+  .brand-name b { color: var(--accent-hi); font-weight: 800; }
+
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .nav-link {
+    padding: 7px 13px;
+    border-radius: 8px;
+    font-size: .85rem;
+    font-weight: 500;
+    color: var(--text-2);
+    transition: color .15s, background .15s;
+  }
+  .nav-link:hover { color: var(--text-1); background: var(--surface); }
+  .nav-link.active { color: var(--text-1); background: var(--surface-2); }
+
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+
+  .user-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 5px 12px 5px 6px;
+    border-radius: 24px;
+    font-size: .82rem;
+    color: var(--text-2);
+  }
+
+  .user-avatar {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: var(--accent-dim);
+    display: grid;
+    place-items: center;
+    font-family: var(--mono);
+    font-size: .72rem;
+    font-weight: 600;
+    color: var(--accent-hi);
+  }
+
+  .logout-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 7px 13px;
+    border-radius: 8px;
+    color: var(--text-2);
+    font-family: var(--sans);
+    font-size: .82rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background .15s, border-color .15s, color .15s;
+  }
+  .logout-btn:hover {
+    background: rgba(242,89,107,.08);
+    border-color: rgba(242,89,107,.25);
+    color: var(--error);
+  }
+
+  /* ============ main content ============ */
+  .shell {
+    position: relative;
+    z-index: 1;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 32px 28px 60px;
+  }
+
+  .page-head {
+    margin-bottom: 28px;
+    opacity: 0;
+    animation: noneriseIn .5s cubic-bezier(.22,.68,0,1.05) forwards;
+  }
+
+  .page-head h1 {
+    font-family: var(--display);
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: -.3px;
+    margin-bottom: 6px;
+  }
+
+  .page-head p {
+    color: var(--text-2);
+    font-size: .9rem;
+  }
+
+  .status-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 28px;
+    font-size: .82rem;
+    color: var(--text-3);
+    opacity: 0;
+    animation: riseIn .5s cubic-bezier(.22,.68,0,1.05) .08s forwards;
+  }
+
+  .status-pip {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--success);
+    box-shadow: 0 0 0 3px rgba(61,220,151,.15);
+  }
+
+  /* ============ flash messages ============ */
+  .flash-wrap {
+    margin-bottom: 20px;
+    opacity: 0;
+    animation: riseIn .4s cubic-bezier(.22,.68,0,1.05) .04s forwards;
+  }
+
+  .flash {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: .85rem;
+    line-height: 1.5;
+    margin-bottom: 10px;
+    border: 1px solid;
+    animation: slideDown .35s ease;
+  }
+
+  .flash.success {
+    background: rgba(61,220,151,.08);
+    color: #7eebb5;
+    border-color: rgba(61,220,151,.2);
+  }
+
+  .flash.error {
+    background: rgba(242,89,107,.08);
+    color: #fb92a0;
+    border-color: rgba(242,89,107,.2);
+  }
+
+  .flash.info {
+    background: rgba(102,133,255,.08);
+    color: var(--accent-hi);
+    border-color: rgba(102,133,255,.2);
+  }
+
+  .flash svg { flex-shrink: 0; margin-top: 2px; }
+
+  .flash-close {
+    margin-left: auto;
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    padding: 2px;
+    opacity: .6;
+    transition: opacity .15s;
+  }
+  .flash-close:hover { opacity: 1; }
+
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ============ deploy panel ============ */
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px 24px;
+    margin-bottom: 24px;
+    opacity: 0;
+    animation: riseIn .5s cubic-bezier(.22,.68,0,1.05) .12s forwards;
+  }
+
+  .panel-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  .panel-head h3 {
+    font-family: var(--display);
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: -.2px;
+  }
+
+  .panel-head svg { color: var(--accent-hi); flex-shrink: 0; }
+
+  .deploy-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+
+  .field label {
+    display: block;
+    font-size: .74rem;
+    font-weight: 600;
+    color: var(--text-2);
+    margin-bottom: 7px;
+  }
+
+  .field input {
+    width: 100%;
+    padding: 11px 13px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text-1);
+    font-family: var(--sans);
+    font-size: .89rem;
+    outline: none;
+    transition: border-color .15s, box-shadow .15s, background .15s;
+  }
+
+  .field input::placeholder { color: var(--text-3); }
+
+  .field input:hover { border-color: var(--border-hi); }
+
+  .field input:focus {
+    border-color: var(--accent);
+    background: var(--surface-3);
+    box-shadow: 0 0 0 4px var(--accent-dim);
+  }
+
+  .deploy-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 20px;
+    background: #435fe0;
+    color: #fff;
+    border: 1px solid rgba(255,255,255,.06);
+    border-radius: 9px;
+    font-family: var(--sans);
+    font-size: .89rem;
+    font-weight: 600;
+    letter-spacing: -.1px;
+    cursor: pointer;
+    transition: background .15s, transform .1s;
+    box-shadow: 0 1px 2px rgba(0,0,0,.35);
+    position: relative;
+  }
+
+  .deploy-btn:hover { background: #3a52c9; }
+  .deploy-btn:active { background: #3248b0; transform: scale(.99); }
+
+  .deploy-btn:focus-visible {
+    outline: 2px solid var(--accent-hi);
+    outline-offset: 2px;
+  }
+
+  .deploy-btn.loading { pointer-events: none; color: transparent; }
+  .deploy-btn.loading .spinner { display: block; }
+
+  .spinner {
+    display: none;
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%,-50%);
+    width: 16px; height: 16px;
+    border: 2.5px solid rgba(255,255,255,.35);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+  }
+  @keyframes spin { to { transform: translate(-50%,-50%) rotate(360deg); } }
+
+  /* ============ container CARDS ============ */
+  .section-label {
+    font-size: .78rem;
+    font-weight: 600;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: .6px;
+    margin-bottom: 14px;
+    opacity: 0;
+    animation: riseIn .5s cubic-bezier(.22,.68,0,1.05) .16s forwards;
+  }
+
+  .container-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 14px;
+    opacity: 0;
+    animation: riseIn .5s cubic-bezier(.22,.68,0,1.05) .2s forwards;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px;
+    transition: border-color .15s;
+  }
+  .card:hover { border-color: var(--border-hi); }
+
+  .card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
+  .card-id {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+  }
+
+  .card-icon {
+    width: 34px; height: 34px;
+    border-radius: 9px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    color: var(--text-2);
+  }
+
+  .card-name-wrap { min-width: 0; }
+
+  .card-name {
+    font-size: .92rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--text-1);
+  }
+
+  .card-image {
+    font-family: var(--mono);
+    font-size: .72rem;
+    color: var(--text-3);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 9px 3px 7px;
+    border-radius: 999px;
+    font-size: .72rem;
+    font-weight: 600;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .status-badge .dot { width: 6px; height: 6px; border-radius: 50%; }
+
+  .status-badge.running { background: var(--success-dim); color: var(--success); }
+  .status-badge.running .dot { background: var(--success); box-shadow: 0 0 0 3px rgba(61,220,151,.18); animation: pulse 1.8s ease-in-out infinite; }
+
+  .status-badge.exited { background: rgba(141,146,172,.1); color: var(--text-2); }
+  .status-badge.exited .dot { background: var(--text-3); }
+
+  .status-badge.paused { background: var(--amber-dim); color: var(--amber); }
+  .status-badge.paused .dot { background: var(--amber); }
+
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 3px rgba(61,220,151,.18); }
+    50% { box-shadow: 0 0 0 5px rgba(61,220,151,.06); }
+  }
+
+  .card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    padding: 12px 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 12px;
+  }
+
+  .meta-item { display: flex; flex-direction: column; gap: 3px; }
+  .meta-label { font-size: .68rem; color: var(--text-3); text-transform: uppercase; letter-spacing: .4px; }
+  .meta-value { font-family: var(--mono); font-size: .78rem; color: var(--text-1); }
+
+  .card-actions { display: flex; gap: 7px; }
+  .card-actions .btn-icon { flex: 1; justify-content: center; padding: 7px 10px; font-size: .78rem; }
+
+  .btn-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 11px;
+    border-radius: 7px;
+    font-size: .78rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text-2);
+    transition: background .12s, border-color .12s, color .12s, transform .1s;
+  }
+
+  .btn-icon:hover { background: var(--surface-3); border-color: var(--border-hi); }
+  .btn-icon.stop:hover { background: rgba(242,89,107,.08); border-color: rgba(242,89,107,.2); color: var(--error); }
+  .btn-icon.restart:hover { background: rgba(247,185,85,.08); border-color: rgba(247,185,85,.2); color: var(--amber); }
+  .btn-icon.remove:hover { background: rgba(242,89,107,.12); border-color: rgba(242,89,107,.25); color: var(--error); }
+  .btn-icon.logs:hover { background: var(--accent-dim); border-color: var(--accent); color: var(--accent-hi); }
+  .btn-icon:active { transform: scale(.97); }
+  .btn-icon:focus-visible { outline: 2px solid var(--accent-hi); outline-offset: 2px; }
+
+  /* ============ empty state ============ */
+  .empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 56px 24px;
+    border: 1px dashed var(--border-hi);
+    border-radius: 16px;
+    color: var(--text-3);
+  }
+  .empty svg { margin-bottom: 14px; opacity: .5; }
+  .empty h3 { font-family: var(--display); font-size: 1.15rem; color: var(--text-1); margin-bottom: 6px; }
+  .empty p { font-size: .87rem; color: var(--text-2); margin-bottom: 20px; }
+
+  /* ============ responsive ============ */
+  @media (max-width: 860px) {
+    .shell { padding: 20px 16px 40px; }
+    .topbar-inner { padding: 0 16px; }
+    .nav-links { display: none; }
+    .deploy-grid { grid-template-columns: 1fr; }
+    .container-grid { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 480px) {
+    .page-head h1 { font-size: 1.3rem; }
+    .panel { padding: 18px 16px; }
+  }
+
+  @keyframes riseIn {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .page-head, .status-bar, .flash-wrap, .panel, .section-label, .container-grid { animation: none; opacity: 1; }
+    .flash { animation: none; }
+    .status-badge.running .dot { animation: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="canvas">
+
+  <!-- ============ TOPBAR ============ -->
+  <nav class="topbar">
+    <div class="topbar-inner">
+      <div class="topbar-left">
+        <a href="{{ url_for('dashboard') }}" class="brand">
+          <svg class="brand-mark" width="34" height="34" viewBox="0 0 24 24">
+            <defs>
+              <linearGradient id="bolt" x1="3" y1="2" x2="21" y2="22" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#ffffff"/>
+                <stop offset="55%" stop-color="#c3cfff"/>
+                <stop offset="100%" stop-color="#6685ff"/>
+              </linearGradient>
+            </defs>
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" fill="url(#bolt)"/>
+          </svg>
+          <span class="brand-name">Ex<b>ploy</b></span>
+        </a>
+        <div class="nav-links">
+          <a href="{{ url_for('dashboard') }}" class="nav-link active">Dashboard</a>
+          <a href="#" class="nav-link" onclick="showToast('Activity page coming in Level 2', 'info'); return false;">Activity</a>
+          <a href="{{ url_for('settings') }}" class="nav-link">Settings</a>
+        </div>
+      </div>
+
+      <div class="topbar-right">
+        <div class="user-pill">
+          <div class="user-avatar">{{ session.username[0]|upper if session.username else 'A' }}</div>
+          <span>{{ session.username or 'admin' }}</span>
+        </div>
+        <a href="{{ url_for('logout') }}" class="logout-btn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+            <polyline points="16 17 21 12 16 7"/>
+            <line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+          <span>Sign out</span>
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ============ MAIN ============ -->
+  <main class="shell">
+
+    <div class="page-head">
+      <h1>Dashboard</h1>
+      <p>Manage your containers and deploy new services.</p>
+    </div>
+
+    {% if docker_error %}
+    <div class="flash-wrap" style="margin-bottom:20px;">
+      <div class="flash error">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <span>{{ docker_error }}</span>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="status-bar">
+      {% if docker_available %}
+      <span class="status-pip"></span>
+      <span>Docker daemon connected</span>
+      {% else %}
+      <span class="status-pip" style="background:var(--error);box-shadow:0 0 0 3px rgba(242,89,107,.15);"></span>
+      <span style="color:var(--error);">Docker daemon unreachable</span>
+      {% endif %}
+      <span style="margin-left:auto;">{{ containers|length }} container{{ 's' if containers|length != 1 else '' }}</span>
+    </div>
+
+    <!-- ============ FLASH MESSAGES ============ -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flash-wrap">
+      {% for category, message in messages %}
+      <div class="flash {{ category }}">
+        {% if category == 'success' %}
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+        {% elif category == 'error' %}
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        {% else %}
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+        </svg>
+        {% endif %}
+        <span>{{ message }}</span>
+        <button class="flash-close" onclick="this.parentElement.remove()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <!-- ============ DEPLOY PANEL ============ -->
+    <div class="panel">
+      <div class="panel-head">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        <h3>Deploy New Container</h3>
+      </div>
+
+      <form method="POST" action="{{ url_for('deploy') }}" id="deployForm">
+        <div class="deploy-grid">
+          <div class="field">
+            <label for="image">Docker Image <span style="color:var(--error)">*</span></label>
+            <input type="text" id="image" name="image" placeholder="nginx:latest" required autofocus/>
+          </div>
+          <div class="field">
+            <label for="name">Container Name</label>
+            <input type="text" id="name" name="name" placeholder="my-app"/>
+          </div>
+          <div class="field">
+            <label for="port">Host Port <span style="color:var(--error)">*</span></label>
+            <input type="number" id="port" name="port" placeholder="8080" min="1" max="65535" required/>
+          </div>
+        </div>
+        <button type="submit" class="deploy-btn" id="deployBtn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+          </svg>
+          <span>Deploy</span>
+          <span class="spinner"></span>
+        </button>
+      </form>
+    </div>
+
+    <!-- ============ CONTAINER CARDS ============ -->
+    <div class="section-label">All containers</div>
+    <div class="container-grid">
+
+      {% if containers %}
+        {% for c in containers %}
+        <div class="card">
+          <div class="card-top">
+            <div class="card-id">
+              <div class="card-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+              </div>
+              <div class="card-name-wrap">
+                <div class="card-name">{{ c.name }}</div>
+                <div class="card-image">{{ c.image.tags[0] if c.image.tags else c.image.id[:19] }}</div>
+              </div>
+            </div>
+            {% set status_class = 'running' if c.status == 'running' else 'exited' if c.status == 'exited' else 'paused' %}
+            <span class="status-badge {{ status_class }}">
+              <span class="dot"></span>{{ c.status|capitalize }}
+            </span>
+          </div>
+
+          <div class="card-meta">
+            <div class="meta-item">
+              <span class="meta-label">Port</span>
+              <span class="meta-value">
+                {% if c.ports %}
+                  {% for port, bindings in c.ports.items() %}
+                    {% if bindings %}{{ bindings[0].get('HostPort', '-') }}{% if not loop.last %}, {% endif %}{% endif %}
+                  {% endfor %}
+                {% else %}—{% endif %}
+              </span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">ID</span>
+              <span class="meta-value">{{ c.short_id }}</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Image</span>
+              <span class="meta-value">{{ c.image.tags[0].split(':')[0] if c.image.tags else c.image.id[:12] }}</span>
+            </div>
+          </div>
+
+          <div class="card-actions">
+            {% if c.status == 'running' %}
+            <a href="{{ url_for('stop', container_id=c.id) }}" class="btn-icon stop" title="Stop">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+              Stop
+            </a>
+            {% else %}
+            <a href="{{ url_for('restart', container_id=c.id) }}" class="btn-icon restart" title="Start">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              Start
+            </a>
+            {% endif %}
+            <a href="{{ url_for('restart', container_id=c.id) }}" class="btn-icon restart" title="Restart">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+              Restart
+            </a>
+            <a href="{{ url_for('logs', container_id=c.id) }}" class="btn-icon logs" title="Logs">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+              Logs
+            </a>
+            <a href="{{ url_for('remove', container_id=c.id) }}" class="btn-icon remove" title="Remove" onclick="return confirm('Remove container &quot;{{ c.name }}&quot;? This cannot be undone.')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              Remove
+            </a>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/>
+          </svg>
+          <h3>No containers running</h3>
+          <p>Deploy your first container using the form above.</p>
+        </div>
+      {% endif %}
+
+    </div>
+
+  </main>
+</div>
+
+<script>
+  // deploy button loading state
+  document.getElementById('deployForm').addEventListener('submit', function() {
+    document.getElementById('deployBtn').classList.add('loading');
+  });
+
+  // auto-dismiss flash messages after 6 seconds
+  document.querySelectorAll('.flash').forEach(function(flash) {
+    setTimeout(function() {
+      flash.style.transition = 'opacity .4s, transform .4s';
+      flash.style.opacity = '0';
+      flash.style.transform = 'translateY(-8px)';
+      setTimeout(function() { flash.remove(); }, 400);
+    }, 6000);
+  });
+
+  // simple toast for nav links
+  function showToast(msg, type) {
+    const div = document.createElement('div');
+    div.className = 'flash ' + (type || 'info');
+    div.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:100;margin:0;white-space:nowrap;';
+    div.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span>' + msg + '</span>';
+    document.body.appendChild(div);
+    setTimeout(() => { div.style.opacity = '0'; setTimeout(() => div.remove(), 400); }, 2600);
+  }
+</script>
+
+</body>
+</html>
