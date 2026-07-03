@@ -44,7 +44,11 @@ def login():
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
-        if username == 'admin' and password == 'admin123':
+        expected_user = os.environ.get('EXPLOY_USER')
+        expected_pass = os.environ.get('EXPLOY_PASS')
+        if not expected_user or not expected_pass:
+            raise ValueError("EXPLOY_USER and EXPLOY_PASS must be set in .env file")
+        if username == expected_user and password == expected_pass:
             session['logged_in'] = True
             session['username'] = username
             flash('Welcome back, admin.', 'success')
