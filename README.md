@@ -98,8 +98,8 @@ Level 1 establishes a functional container management dashboard built with Flask
 
 ### Level 2 — CI Integration (In Progress)
 
-- [ ] GitHub repository integration
-- [ ] Detect code pushes automatically
+- [x] GitHub repository integration
+- [x] Detect code pushes automatically
 - [ ] Trigger Docker image builds via GitHub Actions
 
 ## Design Approach
