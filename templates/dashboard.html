@@ -783,6 +783,10 @@
               <span class="meta-label">Image</span>
               <span class="meta-value">{{ c.image.tags[0].split(':')[0] if c.image.tags else c.image.id[:12] }}</span>
             </div>
+            <div class="meta-item">
+              <span class="meta-label">Repo</span>
+              <span class="meta-value">{{ c.labels.get('exploy.repo', '—') }}</span>
+            </div>
           </div>
 
           <div class="card-actions">

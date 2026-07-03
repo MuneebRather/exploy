@@ -135,6 +135,8 @@ def deploy():
         }
         if name:
             run_kwargs['name'] = name
+        if repo:
+            run_kwargs['labels'] = {'exploy.repo': repo}
 
         container = client.containers.run(**run_kwargs)
         msg = f'Container "{container.name}" deployed successfully on port {port_int}.'
