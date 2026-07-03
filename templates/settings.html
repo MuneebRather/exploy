@@ -323,7 +323,7 @@
     .page-head, .settings-grid { animation: none; opacity: 1; }
   }
 </style>
-<base target="_blank">
+
 </head>
 <body>
 
@@ -348,7 +348,7 @@
         </a>
         <div class="nav-links">
           <a href="{{ url_for('dashboard') }}" class="nav-link">Dashboard</a>
-          <a href="#" class="nav-link" onclick="showToast('Activity page coming in Level 2', 'info'); return false;">Activity</a>
+          <a href="{{ url_for('activity') }}" class="nav-link">Activity</a>
           <a href="{{ url_for('settings') }}" class="nav-link active">Settings</a>
         </div>
       </div>
