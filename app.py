@@ -94,6 +94,7 @@ def deploy():
     image = request.form.get('image', '').strip()
     name = request.form.get('name', '').strip()
     port = request.form.get('port', '').strip()
+    repo = request.form.get('repo', '').strip()
 
     # ── Validation ──────────────────────────
     if not image:
@@ -136,7 +137,10 @@ def deploy():
             run_kwargs['name'] = name
 
         container = client.containers.run(**run_kwargs)
-        flash(f'Container "{container.name}" deployed successfully on port {port_int}.', 'success')
+        msg = f'Container "{container.name}" deployed successfully on port {port_int}.'
+        if repo:
+            msg += f' Linked to {repo}.'
+        flash(msg, 'success')
     except docker.errors.ImageNotFound:
         flash(f'Image "{image}" not found. Pull it first or check the name.', 'error')
     except docker.errors.APIError as e:

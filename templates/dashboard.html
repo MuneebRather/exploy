@@ -400,6 +400,10 @@
   .deploy-btn.loading { pointer-events: none; color: transparent; }
   .deploy-btn.loading .spinner { display: block; }
 
+    #deployForm .deploy-btn {
+    margin-top: 20px;
+  }
+
   .spinner {
     display: none;
     position: absolute;
@@ -722,6 +726,10 @@
             <label for="port">Host Port <span style="color:var(--error)">*</span></label>
             <input type="number" id="port" name="port" placeholder="8080" min="1" max="65535" required/>
           </div>
+        </div>
+        <div class="field" style="margin-top:14px;">
+          <label for="repo">GitHub Repository <span style="color:var(--text-3);font-size:.72rem;font-weight:400;">(optional — for CI integration)</span></label>
+          <input type="text" id="repo" name="repo" placeholder="github.com/username/repo"/>
         </div>
         <button type="submit" class="deploy-btn" id="deployBtn">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
