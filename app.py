@@ -1,10 +1,17 @@
+import os
 import docker
 import sys
 from functools import wraps
 from flask import Flask, render_template, request, redirect, url_for, session, flash
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = 'exploy-secret-key-2026'
+app.secret_key = os.environ.get('SECRET_KEY')
+if not app.secret_key:
+    raise ValueError("No SECRET_KEY set. Please create a .env file with SECRET_KEY=your-key")
 
 # ── Docker client (with fallback if daemon is down) ─────────────────
 client = None
