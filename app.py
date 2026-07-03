@@ -216,6 +216,23 @@ def logs(container_id):
     return render_template('logs.html', logs=logs_data,
                            container_id=container_id)
 
+@app.route('/logs/<container_id>/raw')
+@login_required
+def logs_raw(container_id):
+    if not docker_available:
+        return 'Error: Docker daemon is not running.', 503
+    
+    try:
+        container = client.containers.get(container_id)
+        logs_data = container.logs(tail=200).decode('utf-8', errors='replace')
+    except docker.errors.NotFound:
+        return 'Error: Container not found.', 404
+    except Exception as e:
+        return f'Error: {str(e)}', 500
+    
+    from flask import Response
+    return Response(logs_data, mimetype='text/plain')
+
 @app.route('/settings')
 @login_required
 def settings():
