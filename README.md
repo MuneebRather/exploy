@@ -53,7 +53,7 @@ Updated application is live
 
 ## Roadmap
 
-### Level 1 — Core Platform (In Progress)
+### Level 1 — Core Platform (Completed)✅
 - Project setup and authentication
 - Docker daemon integration
 - Deploy containers via dashboard
@@ -87,12 +87,14 @@ Updated application is live
 
 ## Progress
 
-### Level 1 — Core Platform (In Progress)
-- [ ] Project setup
-- [ ] Authentication system
-- [ ] Docker daemon integration
-- [ ] Container deployment via UI
-- [ ] Container management and logs
+### Level 1 — Core Platform ✅
+- [x] Project setup
+- [x] Authentication system
+- [x] Docker daemon integration
+- [x] Container deployment via UI
+- [x] Container management and logs
+
+Level 1 establishes a functional container management dashboard built with Flask and the Docker SDK. Containers are displayed in a card-based interface with real-time status indicators and support full lifecycle operations, including deploy, start, stop, restart, and remove. A dedicated logs viewer enables inspection of container output. The application verifies Docker daemon connectivity during startup and handles daemon unavailability gracefully. All management routes are protected using a login_required decorator, and a settings page provides platform information along with Docker Engine status.
 
 ## Design Approach
 
