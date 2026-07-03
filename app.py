@@ -5,6 +5,9 @@ from functools import wraps
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from dotenv import load_dotenv
 
+# In-memory event store for push events
+push_events = []
+
 # Load environment variables from .env file
 load_dotenv()
 
@@ -238,6 +241,32 @@ def logs_raw(container_id):
     
     from flask import Response
     return Response(logs_data, mimetype='text/plain')
+
+@app.route('/webhook/github', methods=['POST'])
+def github_webhook():
+    """Receive GitHub push events (simulated via curl for local testing)"""
+    data = request.get_json() or {}
+    
+    event = {
+        'type': 'push',
+        'repo': data.get('repository', {}).get('full_name', 'unknown/repo'),
+        'branch': data.get('ref', 'unknown').replace('refs/heads/', ''),
+        'commit': data.get('after', 'unknown')[:7],
+        'author': data.get('pusher', {}).get('name', 'unknown'),
+        'timestamp': __import__('datetime').datetime.now().isoformat()
+    }
+    
+    push_events.append(event)
+    # Keep only last 50 events
+    if len(push_events) > 50:
+        push_events.pop(0)
+    
+    return {'status': 'ok', 'event': event}, 200
+
+@app.route('/activity')
+@login_required
+def activity():
+    return render_template('activity.html', events=push_events)
 
 @app.route('/settings')
 @login_required
