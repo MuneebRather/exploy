@@ -65,7 +65,7 @@ Updated application is live
 - Detect code pushes automatically
 - Trigger Docker image builds via GitHub Actions
 
-### Level 3 — CD Automation (Planned)
+### Level 3 — CD Automation (In Progress)
 - Monitor Docker Hub for new image versions
 - Auto pull and deploy on image update
 - Deployment history and logs
@@ -104,6 +104,14 @@ Level 1 establishes a functional container management dashboard built with Flask
 
 Linked containers to their corresponding GitHub repositories
 using Docker labels and implemented a webhook endpoint to receive GitHub push events. Added an Activity page to display deployment history, including repository, branch, commit hash, author, and event status. Configured a GitHub Actions workflow to automatically build and push Docker images to Docker Hub whenever code is pushed to the main branch. Images are tagged with the Git commit SHA to ensure version traceability and reproducible deployments.
+
+### Level 3 — CD Automation (In Progress)
+
+- [ ] Monitor Docker Hub for new image versions
+- [ ] Connect Exploy to Docker Hub for image pulling
+- [ ] Auto pull and deploy new images
+- [ ] Webhook notification from GitHub Actions to Exploy
+- [ ] Deployment history and logs
 
 ## Design Approach
 
