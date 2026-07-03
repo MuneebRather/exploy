@@ -351,6 +351,14 @@
     outline: none;
     transition: border-color .15s, box-shadow .15s, background .15s;
   }
+    .field input::-webkit-outer-spin-button,
+  .field input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  .field input[type=number] {
+    -moz-appearance: textfield;
+  }
 
   .field input::placeholder { color: var(--text-3); }
 
