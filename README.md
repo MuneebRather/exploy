@@ -107,7 +107,7 @@ using Docker labels and implemented a webhook endpoint to receive GitHub push ev
 
 ### Level 3 — CD Automation (In Progress)
 
-- [ ] Monitor Docker Hub for new image versions
+- [x] Monitor Docker Hub for new image versions
 - [ ] Connect Exploy to Docker Hub for image pulling
 - [ ] Auto pull and deploy new images
 - [ ] Webhook notification from GitHub Actions to Exploy
