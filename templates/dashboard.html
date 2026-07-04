@@ -669,7 +669,18 @@
       <span class="status-pip" style="background:var(--error);box-shadow:0 0 0 3px rgba(242,89,107,.15);"></span>
       <span style="color:var(--error);">Docker daemon unreachable</span>
       {% endif %}
-      <span style="margin-left:auto;">{{ containers|length }} container{{ 's' if containers|length != 1 else '' }}</span>
+            <span style="margin-left:auto;display:flex;align-items:center;gap:8px;">
+        <span class="status-pip"></span>
+        <span style="font-size:.82rem;color:var(--text-2);">Running</span>
+        <span style="background:var(--surface-2);border:1px solid var(--border);padding:4px 12px;border-radius:8px;font-family:var(--mono);font-size:.82rem;color:var(--text-1);font-weight:600;min-width:28px;text-align:center;">{{ running_count }}</span>
+        <span style="width:1px;height:16px;background:var(--border);"></span>
+        <span class="status-pip" style="background:var(--error);box-shadow:0 0 0 3px rgba(242,89,107,.15);"></span>
+        <span style="font-size:.82rem;color:var(--text-2);">Stopped</span>
+        <span style="background:var(--surface-2);border:1px solid var(--border);padding:4px 12px;border-radius:8px;font-family:var(--mono);font-size:.82rem;color:var(--text-3);font-weight:600;min-width:28px;text-align:center;">{{ stopped_count }}</span>
+        <span style="width:1px;height:16px;background:var(--border);"></span>
+        <span style="font-size:.82rem;color:var(--text-2);">Total</span>
+        <span style="background:var(--surface-2);border:1px solid var(--border);padding:4px 12px;border-radius:8px;font-family:var(--mono);font-size:.82rem;color:var(--text-1);font-weight:600;min-width:28px;text-align:center;">{{ containers|length }}</span>
+      </span>
     </div>
 
     <!-- ============ FLASH MESSAGES ============ -->
@@ -728,8 +739,8 @@
           </div>
         </div>
         <div class="field" style="margin-top:14px;">
-          <label for="repo">GitHub Repository <span style="color:var(--text-3);font-size:.72rem;font-weight:400;">(optional — for CI integration)</span></label>
-          <input type="text" id="repo" name="repo" placeholder="github.com/username/repo"/>
+          <label for="repo">Linked Repository <span style="color:var(--text-3);font-size:.72rem;font-weight:400;">(optional — monitors Docker Hub for updates)</span></label>
+          <input type="text" id="repo" name="repo" placeholder="username/repo"/>
         </div>
         <button type="submit" class="deploy-btn" id="deployBtn">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -912,7 +923,7 @@
               <span class="meta-value">{{ c.image.tags[0].split(':')[0] if c.image.tags else c.image.id[:12] }}</span>
             </div>
             <div class="meta-item">
-              <span class="meta-label">Repo</span>
+              <span class="meta-label">Linked Repo</span>
               <span class="meta-value">{{ c.labels.get('exploy.repo', '—').replace('github.com/', '').replace('https://github.com/', '') }}</span>
             </div>
           </div>
