@@ -913,7 +913,7 @@
             </div>
             <div class="meta-item">
               <span class="meta-label">Repo</span>
-              <span class="meta-value">{{ c.labels.get('exploy.repo', '—') }}</span>
+              <span class="meta-value">{{ c.labels.get('exploy.repo', '—').replace('github.com/', '').replace('https://github.com/', '') }}</span>
             </div>
           </div>
 

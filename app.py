@@ -164,6 +164,17 @@ def deploy():
     except Exception:
         pass
 
+        # ── Pull image if not local ─────────────
+    try:
+        client.images.get(image)
+    except docker.errors.ImageNotFound:
+        try:
+            client.images.pull(image)
+            flash(f'Pulled {image} from Docker Hub and deployed.', 'success')
+        except Exception as e:
+            flash(f'Failed to pull {image}: {str(e)}', 'error')
+            return redirect(url_for('dashboard'))
+
     # ── Deploy ──────────────────────────────
     try:
         run_kwargs = {
