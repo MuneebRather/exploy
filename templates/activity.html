@@ -19,6 +19,9 @@
     --accent-hi:  #86a0ff;
     --accent-dim: rgba(102,133,255,.16);
     --success:    #3ddc97;
+    --success-dim: rgba(61,220,151,.14);
+    --error:      #f2596b;
+    --error-dim:  rgba(242,89,107,.14);
     --text-1:     #f5f6fa;
     --text-2:     #8d92ac;
     --text-3:     #4f5471;
@@ -109,49 +112,108 @@
   .page-head h1 { font-family: var(--display); font-size: 1.6rem; font-weight: 700; letter-spacing: -.3px; margin-bottom: 6px; }
   .page-head p { color: var(--text-2); font-size: .9rem; }
 
-  .event-list { display: flex; flex-direction: column; gap: 12px; }
-
-  .event-card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 12px; padding: 16px 20px;
-    display: flex; align-items: center; gap: 16px;
+  .activity-table {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
   }
 
-  .event-icon {
-    width: 36px; height: 36px; border-radius: 9px;
+  .activity-header {
+    display: grid;
+    grid-template-columns: 100px 1fr 180px 140px;
+    gap: 16px;
+    padding: 14px 20px;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border);
+    font-size: .75rem;
+    font-weight: 600;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: .5px;
+  }
+
+  .activity-row {
+    display: grid;
+    grid-template-columns: 100px 1fr 180px 140px;
+    gap: 16px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    align-items: center;
+    transition: background .12s;
+  }
+
+  .activity-row:hover { background: var(--surface-2); }
+  .activity-row:last-child { border-bottom: none; }
+
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: .78rem;
+    font-weight: 600;
+  }
+
+  .status-badge.success {
+    background: var(--success-dim);
+    color: var(--success);
+  }
+
+  .status-badge.deploy {
     background: var(--accent-dim);
-    display: grid; place-items: center;
-    color: var(--accent-hi); flex-shrink: 0;
+    color: var(--accent-hi);
   }
 
-  .event-body { flex: 1; min-width: 0; }
+  .status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+  }
+
+  .status-badge.success .status-dot { background: var(--success); }
+  .status-badge.deploy .status-dot { background: var(--accent-hi); }
 
   .event-title {
-    font-size: .9rem; font-weight: 600; color: var(--text-1);
+    font-size: .88rem;
+    font-weight: 500;
+    color: var(--text-1);
     margin-bottom: 4px;
   }
 
   .event-meta {
-    font-family: var(--mono); font-size: .75rem; color: var(--text-3);
-    display: flex; gap: 16px; flex-wrap: wrap;
+    font-family: var(--mono);
+    font-size: .75rem;
+    color: var(--text-2);
   }
 
   .event-time {
-    font-size: .75rem; color: var(--text-3); flex-shrink: 0;
+    font-size: .8rem;
+    color: var(--text-2);
+  }
+
+  .event-time-relative {
+    font-size: .72rem;
+    color: var(--text-3);
   }
 
   .empty {
-    text-align: center; padding: 80px 24px;
-    border: 1px dashed var(--border-hi); border-radius: 16px;
+    text-align: center;
+    padding: 80px 24px;
   }
+
   .empty svg { margin-bottom: 14px; color: var(--text-3); opacity: .5; }
   .empty h3 { font-family: var(--display); font-size: 1.15rem; color: var(--text-1); margin-bottom: 6px; }
   .empty p { font-size: .87rem; color: var(--text-2); }
 
   @media (max-width: 860px) {
     .shell { padding: 20px 16px 40px; }
-    .topbar-inner { padding: 0 16px; }
-    .nav-links { display: none; }
+    .activity-header,
+    .activity-row {
+      grid-template-columns: 80px 1fr 120px;
+    }
+    .activity-header > :last-child,
+    .activity-row > :last-child { display: none; }
   }
 </style>
 </head>
@@ -202,26 +264,52 @@
   <main class="shell">
     <div class="page-head">
       <h1>Activity</h1>
-      <p>Push events and deployment history.</p>
+      <p>Deployment history and push events.</p>
     </div>
 
     {% if events %}
-    <div class="event-list">
+    <div class="activity-table">
+      <div class="activity-header">
+        <div>Status</div>
+        <div>Event</div>
+        <div>Details</div>
+        <div>Time</div>
+      </div>
       {% for e in events %}
-      <div class="event-card">
-        <div class="event-icon">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="20 6 9 17 4 12"/>
-          </svg>
+      <div class="activity-row">
+        <div>
+          {% if e.type == 'push' %}
+          <span class="status-badge success">
+            <span class="status-dot"></span>
+            Push
+          </span>
+          {% elif e.type == 'deploy' %}
+          <span class="status-badge deploy">
+            <span class="status-dot"></span>
+            Deploy
+          </span>
+          {% endif %}
         </div>
-        <div class="event-body">
-          <div class="event-title">Push to {{ e.repo }} ({{ e.branch }})</div>
-          <div class="event-meta">
-            <span>Commit {{ e.commit }}</span>
-            <span>by {{ e.author }}</span>
-          </div>
+        <div>
+          {% if e.type == 'push' %}
+          <div class="event-title">Push to {{ e.branch }}</div>
+          <div class="event-meta">{{ e.repo }}</div>
+          {% elif e.type == 'deploy' %}
+          <div class="event-title">Deployed {{ e.repo }}</div>
+          <div class="event-meta">Container: {{ e.container }}</div>
+          {% endif %}
         </div>
-        <div class="event-time">{{ e.timestamp[:19] }}</div>
+        <div>
+          {% if e.type == 'push' %}
+          <span class="event-meta">Commit {{ e.commit }}</span>
+          {% elif e.type == 'deploy' %}
+          <span class="event-meta">Tag {{ e.tag[:7] }}</span>
+          {% endif %}
+        </div>
+        <div>
+          <div class="event-time">{{ e.timestamp[:10] }}</div>
+          <div class="event-time-relative">{{ e.timestamp[11:16] }}</div>
+        </div>
       </div>
       {% endfor %}
     </div>
@@ -231,7 +319,7 @@
         <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
       </svg>
       <h3>No activity yet</h3>
-      <p>Push events will appear here when GitHub webhooks are received.</p>
+      <p>Push events and deployments will appear here.</p>
     </div>
     {% endif %}
   </main>
