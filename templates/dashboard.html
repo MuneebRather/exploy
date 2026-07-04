@@ -571,6 +571,114 @@
   .empty h3 { font-family: var(--display); font-size: 1.15rem; color: var(--text-1); margin-bottom: 6px; }
   .empty p { font-size: .87rem; color: var(--text-2); margin-bottom: 20px; }
 
+  /* ============ Docker Hub tags ============ */
+  .dh-repo { margin-top: 16px; }
+  .dh-repo:first-child { margin-top: 0; }
+
+  .dh-repo-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .dh-repo-header svg { color: var(--accent-hi); flex-shrink: 0; }
+
+  .dh-repo-name {
+    font-family: var(--mono);
+    font-size: .82rem;
+    color: var(--text-1);
+    font-weight: 600;
+  }
+
+  .dh-repo-count {
+    margin-left: auto;
+    font-size: .72rem;
+    color: var(--text-3);
+    background: var(--surface-2);
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-family: var(--mono);
+  }
+
+  .dh-tag-list {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .dh-tag {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    transition: border-color .15s, background .15s;
+  }
+
+  .dh-tag:hover {
+    border-color: var(--accent);
+    background: var(--surface-3);
+  }
+
+  .dh-tag-name {
+    font-family: var(--mono);
+    font-size: .78rem;
+    color: var(--accent-hi);
+    font-weight: 500;
+  }
+
+  .dh-tag-label {
+    font-size: .65rem;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    font-weight: 500;
+  }
+
+  .dh-tag-date {
+    font-size: .7rem;
+    color: var(--text-3);
+  }
+
+  .dh-tag-latest {
+    border-color: var(--accent);
+    background: var(--accent-dim);
+  }
+
+  .dh-tag-current {
+    border-color: var(--success);
+    background: var(--success-dim);
+  }
+
+  .dh-tag-badge {
+    font-size: .62rem;
+    font-weight: 600;
+    color: var(--accent-hi);
+    background: rgba(102,133,255,.18);
+    padding: 2px 7px;
+    border-radius: 5px;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    margin-left: 4px;
+  }
+
+  .dh-tag-badge-current {
+    font-size: .62rem;
+    font-weight: 600;
+    color: var(--success);
+    background: rgba(61,220,151,.18);
+    padding: 2px 7px;
+    border-radius: 5px;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    margin-left: 4px;
+  }
+
   /* ============ responsive ============ */
   @media (max-width: 860px) {
     .shell { padding: 20px 16px 40px; }
@@ -596,6 +704,7 @@
     .status-badge.running .dot { animation: none; }
   }
 </style>
+
 </head>
 <body>
 
@@ -650,6 +759,55 @@
       <p>Manage your containers and deploy new services.</p>
     </div>
 
+    <!-- ============ DEPLOY NOTIFICATION ============ -->
+    {% set latest_deploy = events|selectattr('type', 'equalto', 'deploy')|list|last %}
+    {% if show_deploy_notice %}
+    <div id="deploy-notice" style="position:fixed;top:80px;right:24px;z-index:100;background:var(--surface);border:1px solid var(--accent);border-radius:12px;padding:14px 18px;box-shadow:0 8px 32px rgba(0,0,0,.4);max-width:320px;transform:translateX(400px);opacity:0;animation:slideInNotice .4s cubic-bezier(.22,.68,0,1.05) forwards;">
+      <div style="display:flex;align-items:flex-start;gap:12px;">
+        <div style="width:32px;height:32px;border-radius:8px;background:var(--accent-dim);display:grid;place-items:center;flex-shrink:0;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-hi)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+          </svg>
+        </div>
+        <div style="min-width:0;">
+          <div style="font-size:.88rem;font-weight:600;color:var(--text-1);margin-bottom:3px;">Deployment Complete</div>
+          <div style="font-size:.78rem;color:var(--text-2);line-height:1.4;">
+            <span style="color:var(--text-1);">{{ latest_deploy.repo }}</span> updated to <span style="font-family:var(--mono);color:var(--accent-hi);">{{ latest_deploy.tag[:7] }}</span>
+          </div>
+        </div>
+        <button onclick="dismissNotice()" style="background:none;border:none;color:var(--text-3);cursor:pointer;padding:2px;flex-shrink:0;margin-top:-2px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <style>
+      @keyframes slideInNotice {
+        from { transform:translateX(400px); opacity:0; }
+        to   { transform:translateX(0); opacity:1; }
+      }
+      @keyframes slideOutNotice {
+        from { transform:translateX(0); opacity:1; }
+        to   { transform:translateX(400px); opacity:0; }
+      }
+    </style>
+
+    <script>
+      function dismissNotice() {
+        var el = document.getElementById('deploy-notice');
+        if (el) {
+          el.style.animation = 'slideOutNotice .3s ease forwards';
+          setTimeout(function() { el.remove(); }, 300);
+        }
+      }
+
+      // Auto-dismiss after 8 seconds
+      setTimeout(function() {
+        dismissNotice();
+      }, 8000);
+    </script>
+    {% endif %}
+
     {% if docker_error %}
     <div class="flash-wrap" style="margin-bottom:20px;">
       <div class="flash error">
@@ -669,12 +827,10 @@
       <span class="status-pip" style="background:var(--error);box-shadow:0 0 0 3px rgba(242,89,107,.15);"></span>
       <span style="color:var(--error);">Docker daemon unreachable</span>
       {% endif %}
-            <span style="margin-left:auto;display:flex;align-items:center;gap:8px;">
-        <span class="status-pip"></span>
+      <span style="margin-left:auto;display:flex;align-items:center;gap:8px;">
         <span style="font-size:.82rem;color:var(--text-2);">Running</span>
         <span style="background:var(--surface-2);border:1px solid var(--border);padding:4px 12px;border-radius:8px;font-family:var(--mono);font-size:.82rem;color:var(--text-1);font-weight:600;min-width:28px;text-align:center;">{{ running_count }}</span>
         <span style="width:1px;height:16px;background:var(--border);"></span>
-        <span class="status-pip" style="background:var(--error);box-shadow:0 0 0 3px rgba(242,89,107,.15);"></span>
         <span style="font-size:.82rem;color:var(--text-2);">Stopped</span>
         <span style="background:var(--surface-2);border:1px solid var(--border);padding:4px 12px;border-radius:8px;font-family:var(--mono);font-size:.82rem;color:var(--text-3);font-weight:600;min-width:28px;text-align:center;">{{ stopped_count }}</span>
         <span style="width:1px;height:16px;background:var(--border);"></span>
@@ -763,7 +919,7 @@
         </svg>
         <h3>Available on Docker Hub</h3>
       </div>
-      
+
       {% for repo, tags in docker_hub_tags.items() %}
       <div class="dh-repo">
         <div class="dh-repo-header">
@@ -775,10 +931,11 @@
         </div>
         <div class="dh-tag-list">
           {% for tag in tags %}
-          <div class="dh-tag {% if loop.first %}dh-tag-latest{% endif %}">
+          <div class="dh-tag {% if loop.first %}dh-tag-latest{% endif %} {% if tag.name == current_tags.get(repo) %}dh-tag-current{% endif %}">
             <span class="dh-tag-label">Tag</span>
             <span class="dh-tag-name">{{ tag.name[:7] }}{{ '...' if tag.name|length > 7 else '' }}</span>
             <span class="dh-tag-date">{{ tag.updated }}</span>
+            {% if tag.name == current_tags.get(repo) %}<span class="dh-tag-badge-current">current</span>{% endif %}
             {% if loop.first %}<span class="dh-tag-badge">latest</span>{% endif %}
           </div>
           {% endfor %}
@@ -786,98 +943,6 @@
       </div>
       {% endfor %}
     </div>
-    
-    <style>
-      .dh-repo { margin-top: 16px; }
-      .dh-repo:first-child { margin-top: 0; }
-      
-      .dh-repo-header {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-bottom: 10px;
-        padding-bottom: 8px;
-        border-bottom: 1px solid var(--border);
-      }
-      
-      .dh-repo-header svg { color: var(--accent-hi); flex-shrink: 0; }
-      
-      .dh-repo-name {
-        font-family: var(--mono);
-        font-size: .82rem;
-        color: var(--text-1);
-        font-weight: 600;
-      }
-      
-      .dh-repo-count {
-        margin-left: auto;
-        font-size: .72rem;
-        color: var(--text-3);
-        background: var(--surface-2);
-        padding: 2px 8px;
-        border-radius: 6px;
-        font-family: var(--mono);
-      }
-      
-      .dh-tag-list {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-      }
-      
-      .dh-tag {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        background: var(--surface-2);
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        padding: 8px 12px;
-        transition: border-color .15s, background .15s;
-      }
-      
-      .dh-tag:hover {
-        border-color: var(--accent);
-        background: var(--surface-3);
-      }
-      
-      .dh-tag-name {
-        font-family: var(--mono);
-        font-size: .78rem;
-        color: var(--accent-hi);
-        font-weight: 500;
-      }
-      
-            .dh-tag-label {
-        font-size: .65rem;
-        color: var(--text-3);
-        text-transform: uppercase;
-        letter-spacing: .5px;
-        font-weight: 500;
-      }
-
-      .dh-tag-date {
-        font-size: .7rem;
-        color: var(--text-3);
-      }
-
-      .dh-tag-latest {
-        border-color: var(--accent);
-        background: var(--accent-dim);
-      }
-
-      .dh-tag-badge {
-        font-size: .62rem;
-        font-weight: 600;
-        color: var(--accent-hi);
-        background: rgba(102,133,255,.18);
-        padding: 2px 7px;
-        border-radius: 5px;
-        text-transform: uppercase;
-        letter-spacing: .4px;
-        margin-left: 4px;
-      }
-    </style>
     {% endif %}
 
     <!-- ============ CONTAINER CARDS ============ -->

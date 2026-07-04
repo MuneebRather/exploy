@@ -105,78 +105,45 @@ def dashboard():
     else:
         docker_error = 'Docker daemon is not running or not accessible.'
 
-        # Fetch Docker Hub tags for each unique linked repo
+    # Fetch Docker Hub tags for each unique linked repo
     docker_hub_tags = {}
-    repo_to_docker = {}  # maps original repo to cleaned docker repo
     if docker_available:
         seen_repos = set()
         for c in containers:
             repo = c.labels.get('exploy.repo')
             if repo and repo not in seen_repos:
                 seen_repos.add(repo)
-                # Strip github.com/ prefix if present for Docker Hub lookup
                 docker_repo = repo.replace('github.com/', '').replace('https://github.com/', '')
-                repo_to_docker[repo] = docker_repo
                 docker_hub_tags[repo] = get_docker_hub_tags(docker_repo)
 
-    # Auto-deploy if newer image available
-    auto_deployed = []
-    if docker_available and docker_hub_tags:
+    # Get current running image tags for each linked repo
+    current_tags = {}
+    if docker_available:
         for c in containers:
-            if c.status != 'running':
-                continue
             repo = c.labels.get('exploy.repo')
-            if not repo or repo not in docker_hub_tags:
-                continue
-            
-            tags = docker_hub_tags[repo]
-            if not tags:
-                continue
-            
-            latest_tag = tags[0]['name']
-            current_image = c.image.tags[0] if c.image.tags else ''
-            current_tag = current_image.split(':')[-1] if ':' in current_image else ''
-            
-            if latest_tag != current_tag:
-                # Auto-deploy latest
-                try:
-                    old_ports = c.attrs.get('HostConfig', {}).get('PortBindings', {})
-                    ports = {}
-                    for container_port, host_bindings in old_ports.items():
-                        if host_bindings:
-                            host_port = host_bindings[0].get('HostPort')
-                            ports[container_port] = int(host_port)
-                    
-                    c.stop()
-                    c.remove(force=True)
-                    
-                    docker_repo = repo_to_docker.get(repo, repo.replace('github.com/', '').replace('https://github.com/', ''))
-                    new_image = f'{docker_repo}:{latest_tag}'
-                    try:
-                        client.images.get(new_image)
-                    except docker.errors.ImageNotFound:
-                        client.images.pull(new_image)
-                    
-                    run_kwargs = {
-                        'image': new_image,
-                        'ports': ports,
-                        'name': c.name,
-                        'detach': True,
-                        'labels': {'exploy.repo': repo}
-                    }
-                    
-                    client.containers.run(**run_kwargs)
-                    auto_deployed.append(f'{c.name} → {latest_tag}')
-                except Exception:
-                    pass
-    
-    if auto_deployed:
-        flash(f'Auto-deployed: {", ".join(auto_deployed)}', 'success')
+            if repo:
+                current_image = c.image.tags[0] if c.image.tags else ''
+                current_tag = current_image.split(':')[-1] if ':' in current_image else ''
+                current_tags[repo] = current_tag
+
+    # Check for new deploys since last visit
+    show_deploy_notice = False
+    deploy_events = [e for e in push_events if e.get('type') == 'deploy']
+    if deploy_events:
+        latest_deploy = deploy_events[-1]
+        latest_deploy_time = latest_deploy['timestamp']
+        last_seen = session.get('last_seen_deploy')
+
+        if last_seen != latest_deploy_time:
+            show_deploy_notice = True
+            session['last_seen_deploy'] = latest_deploy_time
 
     return render_template('dashboard.html', containers=containers,
                            running_count=running_count, stopped_count=stopped_count,
                            docker_error=docker_error, docker_available=docker_available,
-                           docker_hub_tags=docker_hub_tags, auto_deployed=auto_deployed)
+                           docker_hub_tags=docker_hub_tags, events=push_events,
+                           show_deploy_notice=show_deploy_notice,
+                           current_tags=current_tags)
 
 @app.route('/deploy', methods=['POST'])
 @login_required
@@ -220,7 +187,7 @@ def deploy():
     except Exception:
         pass
 
-        # ── Pull image if not local ─────────────
+    # ── Pull image if not local ─────────────
     try:
         client.images.get(image)
     except docker.errors.ImageNotFound:
@@ -235,7 +202,7 @@ def deploy():
     try:
         run_kwargs = {
             'image': image,
-            'ports': {f'80/tcp': port_int},
+            'ports': {'80/tcp': port_int},
             'detach': True
         }
         if name:
@@ -332,7 +299,7 @@ def logs(container_id):
 def logs_raw(container_id):
     if not docker_available:
         return 'Error: Docker daemon is not running.', 503
-    
+
     try:
         container = client.containers.get(container_id)
         logs_data = container.logs(tail=200).decode('utf-8', errors='replace')
@@ -340,7 +307,7 @@ def logs_raw(container_id):
         return 'Error: Container not found.', 404
     except Exception as e:
         return f'Error: {str(e)}', 500
-    
+
     from flask import Response
     return Response(logs_data, mimetype='text/plain')
 
@@ -348,7 +315,7 @@ def logs_raw(container_id):
 def github_webhook():
     """Receive GitHub push events (simulated via curl for local testing)"""
     data = request.get_json() or {}
-    
+
     event = {
         'type': 'push',
         'repo': data.get('repository', {}).get('full_name', 'unknown/repo'),
@@ -357,28 +324,28 @@ def github_webhook():
         'author': data.get('pusher', {}).get('name', 'unknown'),
         'timestamp': __import__('datetime').datetime.now().isoformat()
     }
-    
+
     push_events.append(event)
     # Keep only last 50 events
     if len(push_events) > 50:
         push_events.pop(0)
-    
+
     return {'status': 'ok', 'event': event}, 200
 
 @app.route('/webhook/deploy', methods=['POST'])
 def deploy_webhook():
     """Receive deploy trigger from GitHub Actions"""
     data = request.get_json() or {}
-    
+
     repo = data.get('repo', '')
     tag = data.get('tag', '')
-    
+
     if not repo or not tag:
         return {'status': 'error', 'message': 'Missing repo or tag'}, 400
-    
+
     if not docker_available or not client:
         return {'status': 'error', 'message': 'Docker not available'}, 503
-    
+
     deployed = []
     try:
         for c in client.containers.list(all=True):
@@ -386,22 +353,22 @@ def deploy_webhook():
             if container_repo and repo in container_repo:
                 docker_repo = repo.replace('github.com/', '').replace('https://github.com/', '')
                 new_image = f'{docker_repo}:{tag}'
-                
+
                 old_ports = c.attrs.get('HostConfig', {}).get('PortBindings', {})
                 ports = {}
                 for container_port, host_bindings in old_ports.items():
                     if host_bindings:
                         host_port = host_bindings[0].get('HostPort')
                         ports[container_port] = int(host_port)
-                
+
                 c.stop()
                 c.remove(force=True)
-                
+
                 try:
                     client.images.get(new_image)
                 except docker.errors.ImageNotFound:
                     client.images.pull(new_image)
-                
+
                 run_kwargs = {
                     'image': new_image,
                     'ports': ports,
@@ -409,12 +376,24 @@ def deploy_webhook():
                     'detach': True,
                     'labels': {'exploy.repo': container_repo}
                 }
-                
+
                 client.containers.run(**run_kwargs)
                 deployed.append(c.name)
     except Exception as e:
         return {'status': 'error', 'message': str(e)}, 500
-    
+
+    # Log deploy events to activity
+    for name in deployed:
+        push_events.append({
+            'type': 'deploy',
+            'repo': repo,
+            'tag': tag,
+            'container': name,
+            'timestamp': __import__('datetime').datetime.now().isoformat()
+        })
+        if len(push_events) > 50:
+            push_events.pop(0)
+
     return {'status': 'ok', 'deployed': deployed}, 200
 
 @app.route('/activity')
