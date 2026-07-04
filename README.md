@@ -65,7 +65,7 @@ Updated application is live
 - Detect code pushes automatically
 - Trigger Docker image builds via GitHub Actions
 
-### Level 3 — CD Automation (In Progress)
+### Level 3 — CD Automation (Completed)✅
 - Monitor Docker Hub for new image versions
 - Auto pull and deploy on image update
 - Deployment history and logs
@@ -105,13 +105,15 @@ Level 1 establishes a functional container management dashboard built with Flask
 Linked containers to their corresponding GitHub repositories
 using Docker labels and implemented a webhook endpoint to receive GitHub push events. Added an Activity page to display deployment history, including repository, branch, commit hash, author, and event status. Configured a GitHub Actions workflow to automatically build and push Docker images to Docker Hub whenever code is pushed to the main branch. Images are tagged with the Git commit SHA to ensure version traceability and reproducible deployments.
 
-### Level 3 — CD Automation (In Progress)
+### Level 3 — CD Automation ✅
 
 - [x] Monitor Docker Hub for new image versions
 - [x] Connect Exploy to Docker Hub for image pulling
-- [ ] Auto pull and deploy new images
-- [ ] Webhook notification from GitHub Actions to Exploy
-- [ ] Deployment history and logs
+- [x] Auto pull and deploy new images
+- [x] Webhook notification from GitHub Actions to Exploy
+- [x] Deployment history and logs
+
+Implemented a production-style, webhook-driven deployment pipeline. The "/webhook/deploy" endpoint receives POST notifications after GitHub Actions successfully pushes a Docker image to Docker Hub. Exploy identifies the linked container using the "exploy.repo" Docker label, gracefully stops the running container, pulls the newly published image tagged with the commit SHA, and starts a fresh container while preserving its port mappings and labels. Every deployment is recorded in the Activity page with the repository name, image tag, container name, and deployment timestamp. The dashboard also displays a deployment notification when a new deployment is detected, and the Docker Hub Tags section highlights both the currently running image ("current") and the latest available image ("latest") for quick version comparison.
 
 ## Design Approach
 
