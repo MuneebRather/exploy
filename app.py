@@ -1,6 +1,8 @@
 import os
 import docker
 import sys
+import urllib.request
+import json
 from functools import wraps
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from dotenv import load_dotenv
@@ -26,6 +28,26 @@ try:
     docker_available = True
 except Exception:
     docker_available = False
+
+# ── Docker Hub helper ───────────────────────
+def get_docker_hub_tags(repo, count=5):
+    """Fetch latest image tags from Docker Hub API for a given repo."""
+    if not repo:
+        return []
+    try:
+        url = f'https://hub.docker.com/v2/repositories/{repo}/tags?page_size={count}'
+        with urllib.request.urlopen(url, timeout=5) as resp:
+            data = json.loads(resp.read().decode())
+            tags = []
+            for result in data.get('results', []):
+                tags.append({
+                    'name': result['name'],
+                    'updated': result['last_updated'][:10] if result['last_updated'] else 'unknown',
+                    'size': result.get('full_size', 0)
+                })
+            return tags
+    except Exception:
+        return []
 
 # ── Auth decorator ────────────────────────────
 def login_required(view_func):
@@ -83,9 +105,22 @@ def dashboard():
     else:
         docker_error = 'Docker daemon is not running or not accessible.'
 
+    # Fetch Docker Hub tags for each unique linked repo
+    docker_hub_tags = {}
+    if docker_available:
+        seen_repos = set()
+        for c in containers:
+            repo = c.labels.get('exploy.repo')
+            if repo and repo not in seen_repos:
+                seen_repos.add(repo)
+                                # Strip github.com/ prefix if present for Docker Hub lookup
+                docker_repo = repo.replace('github.com/', '').replace('https://github.com/', '')
+                docker_hub_tags[repo] = get_docker_hub_tags(docker_repo)
+
     return render_template('dashboard.html', containers=containers,
                            running_count=running_count, stopped_count=stopped_count,
-                           docker_error=docker_error, docker_available=docker_available)
+                           docker_error=docker_error, docker_available=docker_available,
+                           docker_hub_tags=docker_hub_tags)
 
 @app.route('/deploy', methods=['POST'])
 @login_required
